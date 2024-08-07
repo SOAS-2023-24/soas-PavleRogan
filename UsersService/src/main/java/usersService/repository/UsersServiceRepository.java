@@ -15,4 +15,6 @@ public interface UsersServiceRepository extends JpaRepository<UserModel, Integer
 	@Transactional
 	@Query("update UserModel u set u.password = ?2, u.role = ?3 where u.email = ?1")
 	void updateUser(String email, String password, String role);
+	
+	boolean existsByRole(String string);
 }

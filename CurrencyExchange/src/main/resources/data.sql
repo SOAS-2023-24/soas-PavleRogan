@@ -1,5 +1,32 @@
-insert into currency_exchange(id, currency_from, currency_to, exchange_value)
-values(1, 'EUR', 'RSD', 117.5),
-	  (2, 'USD', 'RSD', 108),
-	  (3, 'CHF', 'RSD', 122),
-	  (4, 'CAD', 'RSD', 79.6);
+INSERT INTO currency_exchange(id, currency_from, currency_to, exchange_value)
+VALUES
+    (1, 'EUR', 'RSD', 117.2),  -- Ažurirano
+    (2, 'USD', 'RSD', 107.9),  -- Ažurirano
+    (3, 'CHF', 'RSD', 121.8),  -- Ažurirano
+    (4, 'CAD', 'RSD', 79.1),   -- Ažurirano
+    (5, 'GBP', 'RSD', 134.6),  -- Ažurirano
+    (6, 'RSD', 'EUR', 0.00854), -- Ažurirano
+    (7, 'RSD', 'USD', 0.00929), -- Ažurirano
+    (8, 'RSD', 'CHF', 0.00822), -- Ažurirano
+    (9, 'RSD', 'CAD', 0.0134), -- Ažurirano
+    (10, 'RSD', 'GBP', 0.00845), -- Ažurirano
+    (11, 'EUR', 'USD', 1.16),   -- Ažurirano
+    (12, 'USD', 'EUR', 0.86),   -- Ažurirano
+    (13, 'EUR', 'GBP', 0.86),   -- Ažurirano
+    (14, 'GBP', 'EUR', 1.16),   -- Ažurirano
+    (15, 'USD', 'GBP', 0.75),   -- Ažurirano
+    (16, 'GBP', 'USD', 1.33),   -- Ažurirano
+    (17, 'EUR', 'CHF', 1.04),   -- Ažurirano
+    (18, 'CHF', 'EUR', 0.96),   -- Ažurirano
+    (19, 'USD', 'CHF', 0.92),   -- Ažurirano
+    (20, 'CHF', 'USD', 1.09),   -- Ažurirano
+    (21, 'GBP', 'CHF', 1.27),   -- Ažurirano
+    (22, 'CHF', 'GBP', 0.79),   -- Ažurirano
+    (23, 'CAD', 'EUR', 0.63),   -- Ažurirano
+    (24, 'EUR', 'CAD', 1.58),   -- Ažurirano
+    (25, 'CAD', 'USD', 0.80),   -- Ažurirano
+    (26, 'USD', 'CAD', 1.25),   -- Ažurirano
+    (27, 'CAD', 'GBP', 0.54),   -- Ažurirano
+    (28, 'GBP', 'CAD', 1.73),   -- Ažurirano
+    (29, 'CAD', 'CHF', 0.75),   -- Ažurirano
+    (30, 'CHF', 'CAD', 1.34);   -- Ažurirano

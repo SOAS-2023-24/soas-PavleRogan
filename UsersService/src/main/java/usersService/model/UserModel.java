@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
 
 @Entity
 public class UserModel implements Serializable {
@@ -17,7 +18,8 @@ public class UserModel implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
+    @SequenceGenerator(name = "user_seq", sequenceName = "user_sequence", initialValue = 11)
 	private int id;
 	
 	@Column(nullable = false, unique = true)
@@ -26,7 +28,7 @@ public class UserModel implements Serializable {
 	@Column(nullable = false)
 	private String password;
 	
-	@Column(nullable = false, columnDefinition = "VARCHAR(10) CHECK (role in ('ADMIN','USER'))")
+	@Column(nullable = false, columnDefinition = "VARCHAR(10) CHECK (role in ('ADMIN','USER', 'OWNER'))")
 	private String role;
 
 	public UserModel() {

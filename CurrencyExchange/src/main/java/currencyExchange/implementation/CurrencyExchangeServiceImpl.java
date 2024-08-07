@@ -20,12 +20,10 @@ public class CurrencyExchangeServiceImpl implements CurrencyExchangeService {
 	private Environment environment;
 
 	@Override
-	public ResponseEntity<?> getExchange(String from, String to) {
+	public ResponseEntity<CurrencyExchangeDto> getExchange(String from, String to) {
 		CurrencyExchangeModel model = repo.findByFromAndTo(from, to);
 		if(model == null) {
-			return ResponseEntity.status(404).body(
-					"Requested exchange pair [" + from + " into " + to + "] could not be found"
-					);
+			return ResponseEntity.status(404).body(null);
 		}
 		return ResponseEntity.ok(convertModelToDto(model));
 	}

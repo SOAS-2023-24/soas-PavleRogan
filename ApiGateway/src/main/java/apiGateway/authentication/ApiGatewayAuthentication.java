@@ -30,7 +30,7 @@ public class ApiGatewayAuthentication {
 		csrf(csrf -> csrf.disable())
 		.authorizeExchange(exchange -> exchange.pathMatchers("/currency-exchange").permitAll()
 				.pathMatchers("/currency-conversion").hasRole("USER")
-				.pathMatchers("/users").hasRole("ADMIN")
+				.pathMatchers("/users/**").hasAnyRole("ADMIN", "OWNER")
 				.pathMatchers(HttpMethod.POST).hasRole("ADMIN"))
 				.httpBasic(Customizer.withDefaults());
 		
@@ -45,7 +45,7 @@ public class ApiGatewayAuthentication {
 		// Van dokera vrednost URL je localhost:8770/users
 		// U dokeru vrednost URL mora biti users-service:8770/users
 		ResponseEntity<List<UserDto>> response = new RestTemplate()
-				.exchange("http://users-service:8770/users", HttpMethod.GET, null,
+				.exchange("http://localhost:8770/users", HttpMethod.GET, null,
 						new ParameterizedTypeReference<List<UserDto>> () {});
 		
 		List<UserDetails> users = new ArrayList<UserDetails>();
