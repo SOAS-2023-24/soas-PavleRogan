@@ -28,10 +28,13 @@ public class ApiGatewayAuthentication {
 	SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
 		http.
 		csrf(csrf -> csrf.disable())
-		.authorizeExchange(exchange -> exchange.pathMatchers("/currency-exchange").permitAll()
-				.pathMatchers("/currency-conversion").hasRole("USER")
-				.pathMatchers("/users/**").hasAnyRole("ADMIN", "OWNER")
-				.pathMatchers(HttpMethod.POST).hasRole("ADMIN"))
+		.authorizeExchange(exchange -> exchange
+			    .pathMatchers("/currency-exchange").permitAll()
+			    .pathMatchers("/currency-conversion").hasRole("USER")
+			    .pathMatchers("/users/**").hasAnyRole("ADMIN", "OWNER")
+			    .pathMatchers("/bank-accounts/**").hasAnyRole("ADMIN")
+			    .pathMatchers("/bank-account/user").hasRole("USER")
+			    .pathMatchers(HttpMethod.POST).hasRole("ADMIN"))
 				.httpBasic(Customizer.withDefaults());
 		
 		return http.build();

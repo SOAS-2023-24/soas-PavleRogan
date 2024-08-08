@@ -33,6 +33,6 @@ public interface UsersService {
 	@GetMapping("/users/current-user-email")
 	String getCurrentUserEmail(@RequestHeader("Authorization") String authorizationHeader);
 	
-	@GetMapping("/users/email/{email}")
+	@GetMapping("/users/by-email/{email}")
 	public Boolean getUser(@PathVariable("email") String email);
 }

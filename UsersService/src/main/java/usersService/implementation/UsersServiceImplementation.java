@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import api.dtos.BankAccountDto;
 import api.dtos.UserDto;
+import api.feignProxies.BankAccountProxy;
 import api.services.UsersService;
 import usersService.model.UserModel;
 import usersService.repository.UsersServiceRepository;
@@ -20,8 +22,14 @@ import usersService.repository.UsersServiceRepository;
 @RestController
 public class UsersServiceImplementation implements UsersService {
 
+	 private final UsersServiceRepository repo;
+	    private final BankAccountProxy bankAccountProxy;
+
 	@Autowired
-	private UsersServiceRepository repo;
+	    public UsersServiceImplementation(UsersServiceRepository repo, BankAccountProxy bankAccountProxy) {
+	        this.repo = repo;
+	        this.bankAccountProxy = bankAccountProxy;
+	   }
 	
 	@Override
 	public List<UserDto> getUsers() {
@@ -54,6 +62,16 @@ public class UsersServiceImplementation implements UsersService {
 
 	    try {
 	        UserModel createdUser = repo.save(user);
+	        
+	        BankAccountDto bankAccountDto = new BankAccountDto();
+            bankAccountDto.setEmail(dto.getEmail());
+            
+            ResponseEntity<?> bankAccountResponse = bankAccountProxy.createBankAccount(bankAccountDto, authorizationHeader);
+            if (!bankAccountResponse.getStatusCode().is2xxSuccessful()) {
+            	
+                repo.delete(createdUser); 
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create bank account for user.");
+            }
 
 	        if ("OWNER".equals(user.getRole()) && repo.existsByRole("OWNER")) {
 	            repo.delete(createdUser);
@@ -94,17 +112,27 @@ public class UsersServiceImplementation implements UsersService {
 	            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No access to this service.");
 	        } else if ("ADMIN".equals(role)) {
 	            if ("USER".equals(user.getRole())) {
-	                repo.deleteById(id);
+	            	
+	                repo.deleteById(id);	                
+	                    
+	                 bankAccountProxy.deleteBankAccount(user.getEmail());
 	               
 	                return ResponseEntity.ok("User with ID " + id + " has been deleted.");
+	                
+	               
+	                
 	            } else {
 	                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Admin can only delete users with role 'USER'.");
 	            }
 	        } else if ("OWNER".equals(role)) {
 	            repo.deleteById(id);
 	            
-	        
-	            return ResponseEntity.ok("User with ID " + id + " has been deleted.");
+	            bankAccountProxy.deleteBankAccount(user.getEmail());
+                
+                	
+                return ResponseEntity.ok("User with ID " + id + " has been deleted.");
+               
+	           
 	        } else {
 	            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized role.");
 	        }

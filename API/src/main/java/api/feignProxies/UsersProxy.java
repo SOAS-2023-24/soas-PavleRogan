@@ -11,5 +11,12 @@ public interface UsersProxy {
 	@GetMapping("/users/by-email/{email}")
 	public Boolean getUser(@PathVariable("email") String email);
 	
+	@GetMapping("/users/current-user-email")
+	String getCurrentUserEmail(@RequestHeader("Authorization") String authorizationHeader);
+	
+
+	@GetMapping("/users/current-user-role")
+	String getCurrentUserRole(@RequestHeader("Authorization") String authorizationHeader);
+	
 	
 }

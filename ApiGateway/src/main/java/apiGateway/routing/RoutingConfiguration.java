@@ -17,6 +17,8 @@ public class RoutingConfiguration {
 						(f -> f.rewritePath("/currency-conversion/(?<segment>.*)", "/currency-conversion-feign/${segment}"))
 						.uri("lb://currency-conversion"))
 				.route(p -> p.path("/users/**").uri("lb://users-service"))
+				.route(p -> p.path("/bank-accounts/**").uri("lb://bank-account"))
+				.route(p -> p.path("/bank-account/user").uri("lb://bank-account"))
 				.build();
 	}
 }
