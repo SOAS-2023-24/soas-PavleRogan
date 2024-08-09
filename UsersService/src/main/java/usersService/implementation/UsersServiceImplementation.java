@@ -53,6 +53,11 @@ public class UsersServiceImplementation implements UsersService {
 	    if (!isRoleAllowedToCreateUser(role, dto.getRole())) {
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(getUnauthorizedMessage(role));
 	    }
+	    
+
+	    if (repo.existsByEmail(dto.getEmail())) {
+	        return ResponseEntity.status(HttpStatus.CONFLICT).body("User with email " + dto.getEmail() + " already exists.");
+	    }
 
 	    UserModel user = convertDtoToModel(dto);
 
@@ -245,15 +250,13 @@ public class UsersServiceImplementation implements UsersService {
 	        return null;
 	    }
 	}
-
 	
 	public String extractEmailFromAuthorizationHeader(String authorizationHeader) {
-		String encodedCredentials = authorizationHeader.replaceFirst("Basic ", "");
-		byte[] decodedBytes = Base64.getDecoder().decode(encodedCredentials.getBytes());
-		String decodedCredentials = new String(decodedBytes);
-		String[] credentials = decodedCredentials.split(":");
-		String role = credentials[0]; 
-		return role;
+	    String encodedCredentials = authorizationHeader.replaceFirst("Basic ", "");
+	    byte[] decodedBytes = Base64.getDecoder().decode(encodedCredentials.getBytes());
+	    String decodedCredentials = new String(decodedBytes);
+	    String[] credentials = decodedCredentials.split(":");
+	    return credentials[0];
 	}
 
 

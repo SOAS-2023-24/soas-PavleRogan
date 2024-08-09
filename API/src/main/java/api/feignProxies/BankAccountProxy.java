@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import api.dtos.BankAccountDto;
 
@@ -30,6 +31,15 @@ public interface BankAccountProxy {
     @PutMapping("/bank-accounts/{email}")
     ResponseEntity<?> updateBankAccount(@PathVariable("email") String email, @RequestBody Map<String, BigDecimal> fiatBalances, @RequestHeader("Authorization") String authorizationHeader);
     
-    
+    @GetMapping("/bank-account/{email}/{currencyFrom}")
+   	public BigDecimal getUserCurrencyAmount(@PathVariable("email") String email, @PathVariable("currencyFrom") String currencyFrom);
 
+    @PutMapping("/bank-account/account")
+    public ResponseEntity<?> updateBalances(@RequestParam(value = "email") String email,
+               @RequestParam(value = "from", required = false) String from,
+               @RequestParam(value = "to", required = false) String to,
+               @RequestParam(value = "quantity", required = false) BigDecimal quantity,
+               @RequestParam(value = "totalAmount", required = false) BigDecimal totalAmount);
+
+    
 }

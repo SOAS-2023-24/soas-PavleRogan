@@ -4,14 +4,20 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import api.dtos.BankAccountDto;
 import api.dtos.CurrencyConversionDto;
 import api.dtos.CurrencyExchangeDto;
+import api.feignProxies.BankAccountProxy;
 import api.feignProxies.CurrencyExchangeProxy;
+import api.feignProxies.UsersProxy;
 import api.services.CurrencyConversionService;
 import feign.FeignException;
 import io.github.resilience4j.circuitbreaker.CallNotPermittedException;
@@ -24,10 +30,17 @@ import util.exceptions.ServiceUnavailableException;
 @RestController
 public class CurrencyConversionServiceImpl implements CurrencyConversionService {
 	
-	private RestTemplate template = new RestTemplate();
+	//private RestTemplate template = new RestTemplate();
+	
+
+	@Autowired
+	private CurrencyExchangeProxy exchangeProxy;
 	
 	@Autowired
-	private CurrencyExchangeProxy proxy;
+	private BankAccountProxy bankAccountProxy;
+
+	@Autowired
+	private UsersProxy usersProxy;
 	
 	CurrencyExchangeDto response;
 	Retry retry;
@@ -36,57 +49,66 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
 		this.retry = registry.retry("default");
 	}
 
-	@Override
-	public ResponseEntity<?> getConversion(String from, String to, BigDecimal quantity) {
-		HashMap<String,String> uriVariables = new HashMap<String,String>();
-		uriVariables.put("from", from);
-		uriVariables.put("to", to);
-		
-		CurrencyExchangeDto dto = null;
-		
-		try {
-			ResponseEntity<CurrencyExchangeDto> response = template.getForEntity
-					("http://localhost:8000/currency-exchange?from={from}&to={to}",
-							CurrencyExchangeDto.class, uriVariables);
-			dto = response.getBody();
-		} catch (HttpClientErrorException e) {
-			throw new NoDataFoundException(e.getMessage());
-		}
-		
-		
-		return ResponseEntity.ok(exchangeToConversion(dto,quantity));
-	}
 	
 	@Override
-	@CircuitBreaker(name = "cb", fallbackMethod = "fallback")
-	public ResponseEntity<?> getConversionFeign(String from, String to, BigDecimal quantity) {
-		try {
-			retry.executeSupplier( () -> response = acquireExchange(from, to));
-		} catch (FeignException e) {
-			if(e.status() != 404) {
-				throw new ServiceUnavailableException("Currency exchange service is unavailable");
-			}
-			throw new NoDataFoundException(e.getMessage());
-		}
-		
-		return ResponseEntity.ok(exchangeToConversion(response, quantity));
-	}
-	
-	public CurrencyExchangeDto acquireExchange(String from, String to) {
-		return proxy.getExchange(from, to).getBody();
-	}
-	
-	public ResponseEntity<?> fallback(CallNotPermittedException ex){
-		return ResponseEntity.status(503).body("Currency conversion service is unavailable");
-	}
-	
-	public CurrencyConversionDto exchangeToConversion(CurrencyExchangeDto exchange,
-			BigDecimal quantity) {
-		return new CurrencyConversionDto(exchange, quantity, exchange.getTo(),
-				quantity.multiply(exchange.getExchangeValue()));
-		
-	}
+	public ResponseEntity<?> getConversionFeign(@RequestParam String from, @RequestParam String to, @RequestParam BigDecimal quantity, @RequestHeader("Authorization") String authorizationHeader) {
+	    try {
+	        String user = usersProxy.getCurrentUserRole(authorizationHeader);
 
+	        if (!"USER".equals(user)) {
+	        	throw new NoDataFoundException("User is not allowed to perform exchanging since they are not 'USER'.");
+	        }
+
+	        String userEmail = usersProxy.getCurrentUserEmail(authorizationHeader);
+	        BankAccountDto bankAccount = bankAccountProxy.getBankAccountByEmail(userEmail);
+
+	        if (bankAccount == null) {
+	        	throw new NoDataFoundException("Bank account not found for user.");
+	        }
+
+	        BigDecimal accountCurrencyAmount = bankAccountProxy.getUserCurrencyAmount(userEmail, from);
+	        if (accountCurrencyAmount.compareTo(quantity) < 0) {
+	        	throw new NoDataFoundException("User doesn't have enough amount in the bank account for exchanging.");
+	        }
+
+	        ResponseEntity<CurrencyExchangeDto> response = exchangeProxy.getExchange(from, to);
+	        
+	        if (response == null || response.getBody() == null) {
+	        	 throw new ServiceUnavailableException("Exchange service response is null.");
+	        }
+
+	        CurrencyExchangeDto responseBody = response.getBody();
+	        BigDecimal exchangeValue = responseBody.getExchangeValue();
+	        BigDecimal totalExchanged = exchangeValue.multiply(quantity);
+
+	        ResponseEntity<?> updatedBalances = bankAccountProxy.updateBalances(userEmail, from, to, quantity, totalExchanged);
+	        
+	        if (!updatedBalances.getStatusCode().is2xxSuccessful()) {
+	            return ResponseEntity.status(updatedBalances.getStatusCode()).body("Failed to update balances.");
+	        }
+
+	        String message = "Conversion was successfull! " + quantity + " - "+ from + " is exchanged for " + to;
+	        
+	        
+	        return ResponseEntity.ok().body(new Object() {
+				public Object getBody() {
+					return updatedBalances.getBody();
+				}
+				public String getMessage() {
+					return message;
+				}
+			});
+
+	    } catch (FeignException ex) {
+	        ex.printStackTrace();
+
+	        return ResponseEntity.status(ex.status()).body(ex.getMessage());
+	    } catch (Exception ex) {
+	        ex.printStackTrace();
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + ex.getMessage());
+	    }
+	}
+	
 	
 
 }

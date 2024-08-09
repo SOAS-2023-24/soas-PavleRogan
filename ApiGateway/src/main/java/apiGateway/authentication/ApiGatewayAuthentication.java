@@ -31,6 +31,7 @@ public class ApiGatewayAuthentication {
 		.authorizeExchange(exchange -> exchange
 			    .pathMatchers("/currency-exchange").permitAll()
 			    .pathMatchers("/currency-conversion").hasRole("USER")
+			    .pathMatchers("/currency-conversion-feign").hasRole("USER")
 			    .pathMatchers("/users/**").hasAnyRole("ADMIN", "OWNER")
 			    .pathMatchers("/bank-accounts/**").hasAnyRole("ADMIN")
 			    .pathMatchers("/bank-account/user").hasRole("USER")
@@ -48,7 +49,7 @@ public class ApiGatewayAuthentication {
 		// Van dokera vrednost URL je localhost:8770/users
 		// U dokeru vrednost URL mora biti users-service:8770/users
 		ResponseEntity<List<UserDto>> response = new RestTemplate()
-				.exchange("http://localhost:8770/users", HttpMethod.GET, null,
+			.exchange("http://localhost:8770/users", HttpMethod.GET, null,
 						new ParameterizedTypeReference<List<UserDto>> () {});
 		
 		List<UserDetails> users = new ArrayList<UserDetails>();
@@ -63,6 +64,7 @@ public class ApiGatewayAuthentication {
 		
 		return new MapReactiveUserDetailsService(users);
 	}
+	
 	
 	@Bean
 	BCryptPasswordEncoder getEncoder() {

@@ -17,4 +17,7 @@ public interface UsersServiceRepository extends JpaRepository<UserModel, Integer
 	void updateUser(String email, String password, String role);
 	
 	boolean existsByRole(String string);
+	
+	boolean existsByEmail(String string);
+
 }
