@@ -13,11 +13,15 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import api.dtos.BankAccountDto;
+import api.dtos.CryptoWalletDto;
 import api.dtos.UserDto;
 import api.feignProxies.BankAccountProxy;
+import api.feignProxies.CryptoWalletProxy;
 import api.services.UsersService;
 import usersService.model.UserModel;
 import usersService.repository.UsersServiceRepository;
+import util.exceptions.DuplicateResourceException;
+import util.exceptions.NoDataFoundException;
 
 @RestController
 public class UsersServiceImplementation implements UsersService {
@@ -25,16 +29,24 @@ public class UsersServiceImplementation implements UsersService {
 	 private final UsersServiceRepository repo;
 	    private final BankAccountProxy bankAccountProxy;
 
+		private CryptoWalletProxy cryptoWalletProxy;
+	    
 	@Autowired
-	    public UsersServiceImplementation(UsersServiceRepository repo, BankAccountProxy bankAccountProxy) {
+	    public UsersServiceImplementation(UsersServiceRepository repo, BankAccountProxy bankAccountProxy, CryptoWalletProxy cryptoWalletProxy) {
 	        this.repo = repo;
 	        this.bankAccountProxy = bankAccountProxy;
+	        this.cryptoWalletProxy= cryptoWalletProxy;
 	   }
 	
 	@Override
 	public List<UserDto> getUsers() {
 		List<UserModel> listOfModels = repo.findAll();
+		 if (listOfModels.isEmpty()) {
+	            throw new NoDataFoundException("No users found.");
+	        }
+		 
 		ArrayList<UserDto> listOfDtos = new ArrayList<UserDto>();
+		
 		for(UserModel model: listOfModels) {
 			listOfDtos.add(convertModelToDto(model));
 		}
@@ -56,7 +68,8 @@ public class UsersServiceImplementation implements UsersService {
 	    
 
 	    if (repo.existsByEmail(dto.getEmail())) {
-	        return ResponseEntity.status(HttpStatus.CONFLICT).body("User with email " + dto.getEmail() + " already exists.");
+           // throw new DuplicateResourceException("User with email " + dto.getEmail() + " already exists.");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("User with email " + dto.getEmail() + " already exists.");
 	    }
 
 	    UserModel user = convertDtoToModel(dto);
@@ -77,6 +90,14 @@ public class UsersServiceImplementation implements UsersService {
                 repo.delete(createdUser); 
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create bank account for user.");
             }
+            
+            CryptoWalletDto cryptoWalletDto = new CryptoWalletDto();
+            cryptoWalletDto.setEmail(dto.getEmail());
+            ResponseEntity<?> cryptoWalletResponse = cryptoWalletProxy.createWallet(cryptoWalletDto, authorizationHeader);
+            if (!cryptoWalletResponse.getStatusCode().is2xxSuccessful()) {
+                repo.delete(createdUser); //  if  wallet creation fails
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create crypto wallet for user.");
+            }
 
 	        if ("OWNER".equals(user.getRole()) && repo.existsByRole("OWNER")) {
 	            repo.delete(createdUser);
@@ -84,8 +105,9 @@ public class UsersServiceImplementation implements UsersService {
 	        }
 
 	        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
-	    } catch (Exception e) {
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating user: " + e.getMessage());
+	    }
+	    catch (Exception e) {
+	       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating user: " + e.getMessage());
 	    }
 	}
 
@@ -121,6 +143,7 @@ public class UsersServiceImplementation implements UsersService {
 	                repo.deleteById(id);	                
 	                    
 	                 bankAccountProxy.deleteBankAccount(user.getEmail());
+	                 cryptoWalletProxy.deleteWallet(user.getEmail());
 	               
 	                return ResponseEntity.ok("User with ID " + id + " has been deleted.");
 	                
@@ -133,6 +156,8 @@ public class UsersServiceImplementation implements UsersService {
 	            repo.deleteById(id);
 	            
 	            bankAccountProxy.deleteBankAccount(user.getEmail());
+                cryptoWalletProxy.deleteWallet(user.getEmail());
+
                 
                 	
                 return ResponseEntity.ok("User with ID " + id + " has been deleted.");

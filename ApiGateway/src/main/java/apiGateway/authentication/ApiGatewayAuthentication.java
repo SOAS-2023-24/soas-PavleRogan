@@ -35,6 +35,8 @@ public class ApiGatewayAuthentication {
 			    .pathMatchers("/users/**").hasAnyRole("ADMIN", "OWNER")
 			    .pathMatchers("/bank-accounts/**").hasAnyRole("ADMIN")
 			    .pathMatchers("/bank-account/user").hasRole("USER")
+			    .pathMatchers("/crypto-wallet/user").hasRole("USER")
+			    .pathMatchers("/crypto-wallet/**").hasAnyRole("ADMIN")
 			    .pathMatchers(HttpMethod.POST).hasRole("ADMIN"))
 				.httpBasic(Customizer.withDefaults());
 		
@@ -45,9 +47,9 @@ public class ApiGatewayAuthentication {
 	@Bean
 	MapReactiveUserDetailsService userDetailsService(BCryptPasswordEncoder encoder) {
 		
-		// Obratiti paznju na URL prilikom dokerizacije
 		// Van dokera vrednost URL je localhost:8770/users
 		// U dokeru vrednost URL mora biti users-service:8770/users
+		
 		ResponseEntity<List<UserDto>> response = new RestTemplate()
 			.exchange("http://localhost:8770/users", HttpMethod.GET, null,
 						new ParameterizedTypeReference<List<UserDto>> () {});
