@@ -24,7 +24,6 @@ public interface CryptoWalletService {
 	@DeleteMapping("/crypto-wallet/{email}")
 	public void deleteWallet(@PathVariable("email") String email);
 	
-	
 	@PostMapping("/crypto-wallet")
 	ResponseEntity<?> createWallet(@RequestBody CryptoWalletDto dto, @RequestHeader("Authorization") String authorizationHeader);
 	
