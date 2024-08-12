@@ -32,12 +32,13 @@ public class ApiGatewayAuthentication {
 			    .pathMatchers("/currency-exchange").permitAll()
 			    .pathMatchers("/currency-conversion").hasRole("USER")
 			    .pathMatchers("/currency-conversion-feign").hasRole("USER")
-			    .pathMatchers("/users/**").hasAnyRole("ADMIN", "OWNER")
 			    .pathMatchers("/bank-account/user").hasRole("USER")
+			    .pathMatchers("/users/**").hasAnyRole("ADMIN", "OWNER")
 			    .pathMatchers("/bank-accounts/**").hasAnyRole("ADMIN")
 			    .pathMatchers("/crypto-wallet/user").hasRole("USER")
-			    .pathMatchers("/crypto-wallet/**").hasAnyRole("ADMIN", "USER")
+			    .pathMatchers("/crypto-wallet/**").hasAnyRole("ADMIN")
 	            .pathMatchers("/crypto-exchange").permitAll()
+	            .pathMatchers("/crypto-conversion").hasRole("USER")
 			    .pathMatchers(HttpMethod.POST).hasRole("ADMIN"))
 				.httpBasic(Customizer.withDefaults());
 		

@@ -42,11 +42,11 @@ public class CryptoWalletModel {
 		this.walletId = walletId;
 	}
 
-	public List<CryptoPairModel> getValues() {
+	public List<CryptoPairModel> getPairs() {
 		return pairs;
 	}
 
-	public void setValues(List<CryptoPairModel> pairs) {
+	public void setPairs(List<CryptoPairModel> pairs) {
 		this.pairs = pairs;
 	}
 

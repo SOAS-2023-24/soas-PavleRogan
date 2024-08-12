@@ -56,7 +56,7 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
 	        String user = usersProxy.getCurrentUserRole(authorizationHeader);
 
 	        if (!"USER".equals(user)) {
-	        	throw new NoDataFoundException("User is not allowed to perform exchanging since they are not 'USER'.");
+	        	throw new NoDataFoundException("Not allowed to perform exchanging since you are not 'USER'.");
 	        }
 
 	        String userEmail = usersProxy.getCurrentUserEmail(authorizationHeader);
@@ -74,7 +74,7 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
 	        ResponseEntity<CurrencyExchangeDto> response = exchangeProxy.getExchange(from, to);
 	        
 	        if (response == null || response.getBody() == null) {
-	        	 throw new ServiceUnavailableException("Exchange service response is null.");
+	        	 throw new ServiceUnavailableException("No CurrencyExchange service response.");
 	        }
 
 	        CurrencyExchangeDto responseBody = response.getBody();
@@ -87,7 +87,7 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
 	            return ResponseEntity.status(updatedBalances.getStatusCode()).body("Failed to update balances.");
 	        }
 
-	        String message = "Conversion was successfull! " + quantity + " - "+ from + " is exchanged for " + to;
+	        String message = "Successfull conversion! " + quantity + " "+ from + " exchanged for "+ totalExchanged + " " + to;
 	        
 	        
 	        return ResponseEntity.ok().body(new Object() {

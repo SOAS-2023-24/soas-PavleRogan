@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -27,9 +28,9 @@ import util.exceptions.NoDataFoundException;
 public class UsersServiceImplementation implements UsersService {
 
 	 private final UsersServiceRepository repo;
-	    private final BankAccountProxy bankAccountProxy;
+	 private final BankAccountProxy bankAccountProxy;
 
-		private CryptoWalletProxy cryptoWalletProxy;
+	 private CryptoWalletProxy cryptoWalletProxy;
 	    
 	@Autowired
 	    public UsersServiceImplementation(UsersServiceRepository repo, BankAccountProxy bankAccountProxy, CryptoWalletProxy cryptoWalletProxy) {
@@ -54,6 +55,62 @@ public class UsersServiceImplementation implements UsersService {
 	}
 
 	
+//	@Override
+//	public ResponseEntity<?> createUser(UserDto dto, @RequestHeader("Authorization") String authorizationHeader) {
+//	    String role = extractRoleFromAuthorizationHeader(authorizationHeader);
+//
+//	    if ("USER".equals(role)) {
+//	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("User does not have access to this service.");
+//	    }
+//
+//	    if (!isRoleAllowedToCreateUser(role, dto.getRole())) {
+//	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(getUnauthorizedMessage(role));
+//	    }
+//	    
+//
+//	    if (repo.existsByEmail(dto.getEmail())) {
+//            return ResponseEntity.status(HttpStatus.CONFLICT).body("User with email " + dto.getEmail() + " already exists.");
+//	    }
+//
+//	    UserModel user = convertDtoToModel(dto);
+//
+//	    if (repo.existsById(user.getId())) {
+//	        return ResponseEntity.status(HttpStatus.CONFLICT).body("User with ID " + user.getId() + " already exists.");
+//	    }
+//
+//	    try {
+//	        UserModel createdUser = repo.save(user);
+//	        
+//	        BankAccountDto bankAccountDto = new BankAccountDto();
+//            bankAccountDto.setEmail(dto.getEmail());
+//            
+//            ResponseEntity<?> bankAccountResponse = bankAccountProxy.createBankAccount(bankAccountDto, authorizationHeader);
+//            if (!bankAccountResponse.getStatusCode().is2xxSuccessful()) {
+//            	
+//                repo.delete(createdUser); 
+//                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create bank account for user.");
+//            }
+//            
+//            CryptoWalletDto cryptoWalletDto = new CryptoWalletDto();
+//            cryptoWalletDto.setEmail(dto.getEmail());
+//            ResponseEntity<?> cryptoWalletResponse = cryptoWalletProxy.createWallet(cryptoWalletDto, authorizationHeader);
+//            if (!cryptoWalletResponse.getStatusCode().is2xxSuccessful()) {
+//                repo.delete(createdUser); //  if  wallet creation fails
+//                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create crypto wallet for user.");
+//            }
+//
+//	        if ("OWNER".equals(user.getRole()) && repo.existsByRole("OWNER")) {
+//	            repo.delete(createdUser);
+//	            return ResponseEntity.status(HttpStatus.CONFLICT).body("A user with role 'OWNER' already exists.");
+//	        }
+//
+//	        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
+//	    }
+//	    catch (Exception e) {
+//	       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating user: " + e.getMessage());
+//	    }
+//	}
+	
 	@Override
 	public ResponseEntity<?> createUser(UserDto dto, @RequestHeader("Authorization") String authorizationHeader) {
 	    String role = extractRoleFromAuthorizationHeader(authorizationHeader);
@@ -65,11 +122,9 @@ public class UsersServiceImplementation implements UsersService {
 	    if (!isRoleAllowedToCreateUser(role, dto.getRole())) {
 	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(getUnauthorizedMessage(role));
 	    }
-	    
 
 	    if (repo.existsByEmail(dto.getEmail())) {
-           // throw new DuplicateResourceException("User with email " + dto.getEmail() + " already exists.");
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("User with email " + dto.getEmail() + " already exists.");
+	        return ResponseEntity.status(HttpStatus.CONFLICT).body("User with email " + dto.getEmail() + " already exists.");
 	    }
 
 	    UserModel user = convertDtoToModel(dto);
@@ -78,45 +133,57 @@ public class UsersServiceImplementation implements UsersService {
 	        return ResponseEntity.status(HttpStatus.CONFLICT).body("User with ID " + user.getId() + " already exists.");
 	    }
 
+	    UserModel createdUser = null;
+	    boolean bankAccountCreated = false;
 	    try {
-	        UserModel createdUser = repo.save(user);
-	        
-	        BankAccountDto bankAccountDto = new BankAccountDto();
-            bankAccountDto.setEmail(dto.getEmail());
-            
-            ResponseEntity<?> bankAccountResponse = bankAccountProxy.createBankAccount(bankAccountDto, authorizationHeader);
-            if (!bankAccountResponse.getStatusCode().is2xxSuccessful()) {
-            	
-                repo.delete(createdUser); 
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create bank account for user.");
-            }
-            
-            CryptoWalletDto cryptoWalletDto = new CryptoWalletDto();
-            cryptoWalletDto.setEmail(dto.getEmail());
-            ResponseEntity<?> cryptoWalletResponse = cryptoWalletProxy.createWallet(cryptoWalletDto, authorizationHeader);
-            if (!cryptoWalletResponse.getStatusCode().is2xxSuccessful()) {
-                repo.delete(createdUser); //  if  wallet creation fails
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create crypto wallet for user.");
-            }
+	        createdUser = repo.save(user);
+
+	        //owner ne moze da kreira wallet i bank acc
+	        if(!"OWNER".equals(role)) {
+	        	  BankAccountDto bankAccountDto = new BankAccountDto();
+	  	        bankAccountDto.setEmail(dto.getEmail());
+
+	  	        ResponseEntity<?> bankAccountResponse = bankAccountProxy.createBankAccount(bankAccountDto, authorizationHeader);
+	  	        if (bankAccountProxy.getBankAccountByEmail(dto.getEmail()) == null) {
+	  	            throw new RuntimeException("Failed to create bank account for user.");
+	  	        }
+	  	        bankAccountCreated = true;
+
+	  	        CryptoWalletDto cryptoWalletDto = new CryptoWalletDto();
+	  	        cryptoWalletDto.setEmail(dto.getEmail());
+	  	        ResponseEntity<?> cryptoWalletResponse = cryptoWalletProxy.createWallet(cryptoWalletDto, authorizationHeader);
+	  	        if (cryptoWalletProxy.getWalletByEmail(dto.getEmail()) == null) {
+	  	            throw new RuntimeException("Failed to create crypto wallet for user.");
+	  	        }
+	        }
+	      
 
 	        if ("OWNER".equals(user.getRole()) && repo.existsByRole("OWNER")) {
-	            repo.delete(createdUser);
-	            return ResponseEntity.status(HttpStatus.CONFLICT).body("A user with role 'OWNER' already exists.");
+	            throw new RuntimeException("A user with role 'OWNER' already exists.");
 	        }
 
 	        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
-	    }
-	    catch (Exception e) {
-	       return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating user: " + e.getMessage());
+
+	    } catch (Exception e) {
+	        if (createdUser != null) {
+	            repo.delete(createdUser);
+	        }
+	        if (bankAccountCreated) {
+	            bankAccountProxy.deleteBankAccount(dto.getEmail());
+	        }
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error creating user: " + e.getMessage());
 	    }
 	}
 
+
+  
+	
 	private boolean isRoleAllowedToCreateUser(String role, String targetRole) {
 	    switch (role) {
 	        case "ADMIN":
 	            return "USER".equals(targetRole);
 	        case "OWNER":
-	            return "USER".equals(targetRole) || "ADMIN".equals(targetRole);
+	            return "USER".equals(targetRole) || "ADMIN".equals(targetRole) || "OWNER".equals(targetRole) ;
 	        default:
 	            return false;
 	    }

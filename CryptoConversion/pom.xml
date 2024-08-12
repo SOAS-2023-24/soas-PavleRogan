@@ -8,11 +8,11 @@
 		<version>3.2.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>soas.crypto-exchange</groupId>
-	<artifactId>crypto-exchange</artifactId>
+	<groupId>soas.crypto-conversion</groupId>
+	<artifactId>crypto-conversion</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>CryptoExchange</name>
-	<description>Service for crypto exchanging</description>
+	<name>CryptoConversion</name>
+	<description>Service for crypto conversion</description>
 	<url/>
 	<licenses>
 		<license/>
@@ -29,7 +29,6 @@
 	<properties>
 		<java.version>17</java.version>
 		<spring-cloud.version>2023.0.1</spring-cloud.version>
-
 	</properties>
 	<dependencies>
 		<dependency>
@@ -52,10 +51,6 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.cloud</groupId>
-			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>soas.api</groupId>
 			<artifactId>API</artifactId>
 			<version>1.0.0</version>
@@ -65,11 +60,16 @@
 			<artifactId>util</artifactId>
 			<version>1.0.0</version>
 		</dependency>
+	   <dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+		</dependency>	
 		<dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-openfeign</artifactId>
-</dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-openfeign</artifactId>
+		</dependency>
 	</dependencies>
+	
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -90,5 +90,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>

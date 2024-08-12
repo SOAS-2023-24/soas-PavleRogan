@@ -127,13 +127,12 @@ public class BankAccountServiceImpl implements BankAccountService{
 	                                         .map(FiatBalanceDto::getCurrency)
 	                                         .collect(Collectors.toSet());
 
-	        // Find missing currencies, kreira set od requered i izbaci imput
+	        // Find missing currencies, kreira set od requered i izbaci input
 	        
 	        Set<String> missingCurrencies = new HashSet<>(requiredCurrencies);
 	        missingCurrencies.removeAll(inputCurrencies);
 
 	        if (!missingCurrencies.isEmpty()) {
-	            // Return error message if currencies are missing
 	            String missingCurrenciesList = String.join(", ", missingCurrencies);
 	            return ResponseEntity.badRequest().body("Missing required currencies: " + missingCurrenciesList);
 	        }
@@ -215,7 +214,7 @@ public class BankAccountServiceImpl implements BankAccountService{
 		    String role = usersProxy.getCurrentUserRole(authorizationHeader);
 		    String currentUserEmail = usersProxy.getCurrentUserEmail(authorizationHeader);
 		    
-		    if ("USER".equals(role)) {
+		    if ("USER".equals(role) ) {
 		        return getBankAccountByEmail(currentUserEmail);
 		    }
 		    return null;
