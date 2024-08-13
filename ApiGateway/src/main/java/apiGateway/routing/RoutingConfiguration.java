@@ -25,6 +25,7 @@ public class RoutingConfiguration {
 				.route(p -> p.path("/crypto-conversion/**").filters
 						(f -> f.rewritePath("/crypto-conversion/(?<segment>.*)", "/crypto-conversion/${segment}"))
 						.uri("lb://crypto-conversion"))
+				.route(p -> p.path("/trade-service").uri("lb://trade-service"))
 				.build();
 	}
 }
