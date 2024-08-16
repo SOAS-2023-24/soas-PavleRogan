@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>soas.trade-service</groupId>
 	<artifactId>trade-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<name>TradeService</name>
 	<description>Service for trade service</description>
 	<url/>

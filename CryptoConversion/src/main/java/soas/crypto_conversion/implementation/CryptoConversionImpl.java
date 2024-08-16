@@ -18,6 +18,7 @@ import api.feignProxies.CryptoWalletProxy;
 import api.feignProxies.UsersProxy;
 import api.services.CryptoConversionService;
 import feign.FeignException;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import util.exceptions.NoDataFoundException;
 import util.exceptions.ServiceUnavailableException;
 
@@ -34,8 +35,9 @@ public class CryptoConversionImpl implements CryptoConversionService {
 	private UsersProxy usersProxy;
 
 	
-
+	/* http://localhost:8500/actuator/circuitbreakers */
 	@Override
+	@CircuitBreaker(name = "crypto-conversion", fallbackMethod = "conversionFallback")
 	public ResponseEntity<?> getConversion(@RequestParam String from, @RequestParam String to, @RequestParam BigDecimal quantity, @RequestHeader("Authorization") String authorizationHeader) {
 	    try {
 	        String user = usersProxy.getCurrentUserRole(authorizationHeader);
@@ -86,11 +88,15 @@ public class CryptoConversionImpl implements CryptoConversionService {
 
 	    } catch (FeignException ex) {
 	        ex.printStackTrace();
-	        return ResponseEntity.status(ex.status()).body(ex.getMessage());
+	        throw new RuntimeException("Feign client error", ex); 
 	    } catch (Exception ex) {
 	        ex.printStackTrace();
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred: " + ex.getMessage());
 	    }
+	}
+	
+	public ResponseEntity<?> conversionFallback(String from, String to, BigDecimal quantity, String authorizationHeader, Throwable ex) {
+	    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Crypto conversion service is currently unavailable. Please try again later.");
 	}
 
 }

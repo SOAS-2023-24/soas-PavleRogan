@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>soas.bank-account</groupId>
 	<artifactId>bank-account</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>BankAccount</name>
 	<description>Service for bank accounts</description>
 	<url/>

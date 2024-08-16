@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>soas.crypto-exchange</groupId>
 	<artifactId>crypto-exchange</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>CryptoExchange</name>
 	<description>Service for crypto exchanging</description>
 	<url/>
