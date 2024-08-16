@@ -3,6 +3,7 @@ package apiGateway.authentication;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.ParameterizedTypeReference;
@@ -23,6 +24,9 @@ import api.dtos.UserDto;
 @Configuration
 @EnableWebFluxSecurity
 public class ApiGatewayAuthentication {
+	
+	@Value("${USER_SERVICE_URL:http://localhost:8770/users}")
+	private String userServiceUrl;
 
 	@Bean
 	SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
@@ -54,7 +58,7 @@ public class ApiGatewayAuthentication {
 		// U dokeru vrednost URL mora biti users-service:8770/users
 		
 		ResponseEntity<List<UserDto>> response = new RestTemplate()
-			.exchange("http://localhost:8770/users", HttpMethod.GET, null,
+			.exchange(userServiceUrl, HttpMethod.GET, null,
 						new ParameterizedTypeReference<List<UserDto>> () {});
 		
 		List<UserDetails> users = new ArrayList<UserDetails>();
