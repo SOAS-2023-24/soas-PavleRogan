@@ -54,7 +54,12 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
 	public ResponseEntity<?> getConversionFeign(@RequestParam String from, @RequestParam String to, @RequestParam BigDecimal quantity, @RequestHeader("Authorization") String authorizationHeader) {
 	    try {
 	        String user = usersProxy.getCurrentUserRole(authorizationHeader);
+	        
 
+	        if (!isSupportedFiatCurrency(from) || !isSupportedFiatCurrency(to)) {
+	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid currency: " + from + " or " + to);
+	        }
+	        
 	        if (!"USER".equals(user)) {
 	        	throw new NoDataFoundException("Not allowed to perform exchanging since you are not 'USER'.");
 	        }
@@ -109,6 +114,14 @@ public class CurrencyConversionServiceImpl implements CurrencyConversionService 
 	    }
 	}
 	
-	
+	  
+	  private boolean isSupportedFiatCurrency(String currency) {
+	        return "EUR".equals(currency) || 
+	               "USD".equals(currency) || 
+	               "RSD".equals(currency) || 
+	               "CHF".equals(currency) || 
+	               "CAD".equals(currency) || 
+	               "GBP".equals(currency);
+	    }
 
 }

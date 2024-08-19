@@ -41,6 +41,10 @@ public class CryptoConversionImpl implements CryptoConversionService {
 	public ResponseEntity<?> getConversion(@RequestParam String from, @RequestParam String to, @RequestParam BigDecimal quantity, @RequestHeader("Authorization") String authorizationHeader) {
 	    try {
 	        String user = usersProxy.getCurrentUserRole(authorizationHeader);
+	        
+	        if (!isSupportedCryptoCurrency(from) || !isSupportedCryptoCurrency(to)) {
+	            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid cryptocurrency: " + from + " or " + to);
+	        }
 
 	        if (!"USER".equals(user)) {
 	            return ResponseEntity.status(HttpStatus.CONFLICT).body("Not allowed if you are not 'USER'.");
@@ -99,4 +103,9 @@ public class CryptoConversionImpl implements CryptoConversionService {
 	    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Crypto conversion service is currently unavailable. Please try again later.");
 	}
 
+	 private boolean isSupportedCryptoCurrency(String currency) {
+	        return "BTC".equals(currency) || 
+	               "ETH".equals(currency) || 
+	               "SOL".equals(currency);
+	    }
 }
