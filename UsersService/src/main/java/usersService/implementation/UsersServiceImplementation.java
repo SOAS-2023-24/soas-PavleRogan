@@ -202,7 +202,7 @@ public class UsersServiceImplementation implements UsersService {
 	            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User with ID " + id + " is not found.");
 	        }
 
-	        if ("USER".equals(role) || "ADMIN".equals(role) ) {
+	        if ("USER".equals(role) ) {
 	            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No access to this service.");
 	        } else if ("ADMIN".equals(role)) {
 	            if ("USER".equals(user.getRole())) {
